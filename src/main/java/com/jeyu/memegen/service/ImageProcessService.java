@@ -1,5 +1,7 @@
 package com.jeyu.memegen.service;
 
+import com.jeyu.memegen.exceptionshandler.BadUrlExceptions;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -33,9 +35,9 @@ public class ImageProcessService {
         try {
             return Optional.of(new URL(url));
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            throw new BadUrlExceptions();
         }
-        return Optional.empty();
+        //return Optional.empty();
 
     }
 
