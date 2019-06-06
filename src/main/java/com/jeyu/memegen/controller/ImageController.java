@@ -10,14 +10,13 @@ import java.net.URL;
 @RestController
 public class ImageController {
 
+    private static final String LENNA_PNG = "https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png";
     //private ImageProcessService ip = new ImageProcessService();
 
-    /*@GetMapping("/hello")
+    @GetMapping("/hello")
     public String helloWorld(){
-        try {
-            return ip.processImage(new URL("http://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png"));
-        } catch (final MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }*/
+        ImageProcessService ip = new ImageProcessService(LENNA_PNG, "To nie jest mem, tak naprawdę chciałem to wszystko tylko przetestować");
+        return ip.processImage();
+
+    }
 }

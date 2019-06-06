@@ -26,7 +26,7 @@ public class ImageProcessService {
 
     }
 
-    public Optional<URL> createUrl(String url) {
+    Optional<URL> createUrl(String url) {
         try {
             return Optional.of(new URL(url));
         } catch (MalformedURLException e) {
@@ -40,19 +40,29 @@ public class ImageProcessService {
         try {
             final BufferedImage image = ImageIO
                     .read(url);
-            Graphics graph = image.getGraphics();
-            //overlayStringOnImage(graph, textToOverlay);
-            String imageInBase64 = encodeToString(image);
-            return imageInBase64;
+            Size imageSize= getImageSize(image);
+            Graphics2D graph = (Graphics2D) image.getGraphics();
+
+            overlayStringOnImage(graph, imageSize);
+            return encodeToString(image);
         }catch(final IOException ioe){
             throw new UncheckedIOException(ioe);
         }
     }
 
-    private void overlayStringOnImage(Graphics graph, List<String> textToOverlay, Size size) {
+    private void overlayStringOnImage(Graphics2D graph, Size size) {
+        //graph.setFont(graph.getFont().deriveFont(30f));
+        Font impact = new Font("Impact", Font.BOLD, 30);
+
+        graph.setFont(impact);
         graph.setFont(graph.getFont().deriveFont(30f));
+        graph.setStroke(new BasicStroke(5f));
+
+        List<String> textToOverlay = getTextToOverlay(this.textToOverlay, graph, size);
         for (int i = 0; i < textToOverlay.size(); i++) {
+
             Size position = calculatePosition(textToOverlay.get(i), i, graph, size);
+
             graph.drawString(textToOverlay.get(i), position.getX(), position.getY());
         }
 
@@ -60,7 +70,9 @@ public class ImageProcessService {
     }
 
 
-    public String encodeToString(BufferedImage image){
+
+
+    String encodeToString(BufferedImage image){
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
         try{
             ImageIO.write(image, "png", os);
@@ -70,11 +82,11 @@ public class ImageProcessService {
         }
     }
 
-    public Size getImageSize(BufferedImage image){
+    Size getImageSize(BufferedImage image){
         return new Size(image.getWidth(), image.getHeight());
     }
 
-    public List<String> getTextToOverlay(String text, Graphics g, Size size){
+    private List<String> getTextToOverlay(String text, Graphics g, Size size){
         List<String> stringList = new ArrayList<>();
         int x = g.getFontMetrics().stringWidth(text);
         if(x>size.getX()){
@@ -88,7 +100,7 @@ public class ImageProcessService {
         return stringList;
     }
 
-    public String[] cutInHalf(String text){
+    String[] cutInHalf(String text){
         int middle = text.length() / 2;
         int before = text.lastIndexOf(" ", middle);
         String[] str = new String[2];
@@ -97,7 +109,7 @@ public class ImageProcessService {
         return str;
     }
 
-    public Size calculatePosition(String text, int index, Graphics g, Size size){
+    private Size calculatePosition(String text, int index, Graphics g, Size size){
         Size position =new Size();
         position.setX(getPosX(text, g, size));
         position.setY(getPosY(index, g, size));
@@ -108,10 +120,10 @@ public class ImageProcessService {
         int posY = 0;
         switch (index){
             case 0:
-                posY = 10;
+                posY = 30;
                 break;
             case 1:
-                posY = g.getFontMetrics().getHeight() + 20;
+                posY = g.getFontMetrics().getHeight() + 40;
                 break;
             case 2:
                 posY = size.getY() - g.getFontMetrics().getHeight() - 20;
@@ -120,7 +132,7 @@ public class ImageProcessService {
                 posY = size.getY() - 10;
                 break;
                 default:
-                    posY = 0;
+                    break;
         }
         return posY;
     }
@@ -135,27 +147,27 @@ public class ImageProcessService {
         private int x;
         private int y;
 
-        public Size() {
+        Size() {
         }
 
-        public Size(int x, int y) {
+        Size(int x, int y) {
             this.x = x;
             this.y = y;
         }
 
-        public int getX() {
+        int getX() {
             return x;
         }
 
-        public void setX(int x) {
+        void setX(int x) {
             this.x = x;
         }
 
-        public int getY() {
+        int getY() {
             return y;
         }
 
-        public void setY(int y) {
+        void setY(int y) {
             this.y = y;
         }
 
