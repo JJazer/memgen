@@ -1,6 +1,7 @@
 package com.jeyu.memegen.service;
 
-import com.jeyu.memegen.exceptionshandler.BadUrlExceptions;
+import com.jeyu.memegen.exception.BadUrlExceptions;
+import com.jeyu.memegen.exception.EncodingException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class ImageProcessService {
         try {
             return Optional.of(new URL(url));
         } catch (MalformedURLException e) {
-            throw new BadUrlExceptions();
+            throw new BadUrlExceptions("Malforned URL");
         }
         //return Optional.empty();
 
@@ -52,62 +53,27 @@ public class ImageProcessService {
             paintText(graph, imageSize);
             return encodeToString(image);
         }catch(final IOException ioe){
-            throw new UncheckedIOException(ioe);
+            throw new EncodingException("Processing image error");
         }
     }
-
-    private void overlayStringOnImage(Graphics2D graph, Size size) {
-        //graph.setFont(graph.getFont().deriveFont(30f));
-        Font impact = new Font("Impact", Font.BOLD, 30);
-
-        graph.setFont(impact);
-        graph.setFont(graph.getFont().deriveFont(30f));
-        graph.setStroke(new BasicStroke(5f));
-
-        FontMetrics fontMetrics = graph.getFontMetrics();
-
-        List<TextPosition> textToOverlay = getTextToOverlayWithPosition(this.textToOverlay, graph, size);
-        for (TextPosition textPosition : textToOverlay) {
-
-            Size position = textPosition.getPosition();
-
-            graph.drawString(textPosition.getText(), position.getX(), position.getY());
-        }
-
-        graph.dispose();
-    }
-
 
     private void paintText(Graphics2D graph, Size size){
 
         graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
-
         graph.setRenderingHint(RenderingHints.KEY_RENDERING,
                 RenderingHints.VALUE_RENDER_QUALITY);
-
         graph.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
                 RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
-
         graph.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                 RenderingHints.VALUE_STROKE_NORMALIZE);
-
         graph.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
         Font impact = new Font("Impact", Font.BOLD, 30);
         graph.setFont(impact);
         graph.setFont(graph.getFont().deriveFont(30f));
         graph.setStroke(new BasicStroke(0.5f));
-
         FontRenderContext frc = graph.getFontRenderContext();
-
-
-        FontMetrics fontMetrics = graph.getFontMetrics();
-
-
-
-
         AffineTransform transform;
         AffineTransform oldForm = graph.getTransform();
         List<TextPosition> textToOverlay = getTextToOverlayWithPosition(this.textToOverlay, graph, size);
@@ -117,23 +83,15 @@ public class ImageProcessService {
             TextLayout textTl = new TextLayout(s, impact, frc);
             Shape outline = textTl.getOutline(null);
             transform = graph.getTransform();
-
             Size position = textPosition.getPosition();
-
-
             graph.setColor(Color.WHITE);
             graph.drawString(textPosition.getText(), position.getX(), position.getY());
             transform.translate(position.getX(), position.getY());
             graph.transform(transform);
             graph.setColor(Color.BLACK);
             graph.draw(outline);
-
-
-
         }
-
     }
-
 
     String encodeToString(BufferedImage image){
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -141,7 +99,7 @@ public class ImageProcessService {
             ImageIO.write(image, "png", os);
             return Base64.getEncoder().encodeToString(os.toByteArray());
         }catch(final IOException ioe){
-            throw new UncheckedIOException(ioe);
+            throw new EncodingException("Encoding error");
         }
     }
 
