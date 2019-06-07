@@ -4,6 +4,7 @@ import com.jeyu.memegen.exception.BadUrlExceptions;
 import com.jeyu.memegen.exception.EncodingException;
 
 import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
@@ -11,7 +12,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -29,7 +29,6 @@ public class ImageProcessService {
     public ImageProcessService(String url, String textToOverlay) {
         this.textToOverlay = textToOverlay;
         createUrl(url).ifPresent(url1 -> this.url = url1);
-
     }
 
     Optional<URL> createUrl(String url) {
@@ -38,8 +37,6 @@ public class ImageProcessService {
         } catch (MalformedURLException e) {
             throw new BadUrlExceptions("Malforned URL");
         }
-        //return Optional.empty();
-
     }
 
     public String processImage(){
@@ -48,8 +45,6 @@ public class ImageProcessService {
                     .read(url);
             Size imageSize= getImageSize(image);
             Graphics2D graph = (Graphics2D) image.getGraphics();
-
-            //overlayStringOnImage(graph, imageSize);
             paintText(graph, imageSize);
             return encodeToString(image);
         }catch(final IOException ioe){
@@ -57,8 +52,43 @@ public class ImageProcessService {
         }
     }
 
-    private void paintText(Graphics2D graph, Size size){
+    private void paintText(@NotNull Graphics2D graph, Size size){
+        setRenderingHints(graph);
+        Font impact = setFont(graph);
 
+        AffineTransform oldForm = graph.getTransform();
+        List<TextPosition> textToOverlay = getTextToOverlayWithPosition(this.textToOverlay, graph, size);
+        for (TextPosition textPosition : textToOverlay) {
+            graph.setTransform(oldForm);
+            paintSingleSentence(graph, impact, textPosition);
+        }
+    }
+
+    private void paintSingleSentence(@NotNull Graphics2D graph, Font impact, TextPosition textPosition) {
+        FontRenderContext frc = graph.getFontRenderContext();
+        AffineTransform transform;
+        String s = textPosition.getText();
+        TextLayout textTl = new TextLayout(s, impact, frc);
+        Shape outline = textTl.getOutline(null);
+        transform = graph.getTransform();
+        Size position = textPosition.getPosition();
+        graph.setColor(Color.WHITE);
+        graph.drawString(textPosition.getText(), position.getX(), position.getY());
+        transform.translate(position.getX(), position.getY());
+        graph.transform(transform);
+        graph.setColor(Color.BLACK);
+        graph.draw(outline);
+    }
+
+    private Font setFont(@NotNull Graphics2D graph) {
+        Font impact = new Font("Impact", Font.BOLD, 30);
+        graph.setFont(impact);
+        graph.setFont(graph.getFont().deriveFont(30f));
+        graph.setStroke(new BasicStroke(0.5f));
+        return impact;
+    }
+
+    private void setRenderingHints(@NotNull Graphics2D graph) {
         graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
         graph.setRenderingHint(RenderingHints.KEY_RENDERING,
@@ -69,28 +99,6 @@ public class ImageProcessService {
                 RenderingHints.VALUE_STROKE_NORMALIZE);
         graph.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        Font impact = new Font("Impact", Font.BOLD, 30);
-        graph.setFont(impact);
-        graph.setFont(graph.getFont().deriveFont(30f));
-        graph.setStroke(new BasicStroke(0.5f));
-        FontRenderContext frc = graph.getFontRenderContext();
-        AffineTransform transform;
-        AffineTransform oldForm = graph.getTransform();
-        List<TextPosition> textToOverlay = getTextToOverlayWithPosition(this.textToOverlay, graph, size);
-        for (TextPosition textPosition : textToOverlay) {
-            graph.setTransform(oldForm);
-            String s = textPosition.getText();
-            TextLayout textTl = new TextLayout(s, impact, frc);
-            Shape outline = textTl.getOutline(null);
-            transform = graph.getTransform();
-            Size position = textPosition.getPosition();
-            graph.setColor(Color.WHITE);
-            graph.drawString(textPosition.getText(), position.getX(), position.getY());
-            transform.translate(position.getX(), position.getY());
-            graph.transform(transform);
-            graph.setColor(Color.BLACK);
-            graph.draw(outline);
-        }
     }
 
     String encodeToString(BufferedImage image){
