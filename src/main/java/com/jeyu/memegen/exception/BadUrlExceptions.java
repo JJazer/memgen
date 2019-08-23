@@ -1,13 +1,13 @@
-package com.jeyu.memegen.exceptionshandler;
+package com.jeyu.memegen.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class BadUrlExceptions extends RuntimeException {
 
-    public BadUrlExceptions(){
-        super("Bad url formed");
+    public BadUrlExceptions(String message){
+        super(message);
     }
 
 }
